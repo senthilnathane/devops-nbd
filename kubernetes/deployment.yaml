@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-nbd
+  namespace: devops-nbd
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: devops-nbd
+
+  template:
+
+    metadata:
+      labels:
+        app: devops-nbd
+
+    spec:
+
+      containers:
+
+      - name: devops-nbd
+
+        image: devops-nbd:v1
+
+        imagePullPolicy: Never
+
+        ports:
+
+        - containerPort: 80
