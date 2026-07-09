@@ -1,9 +1,10 @@
 pipeline {
+
     agent any
 
     environment {
-        IMAGE_NAME = "devops-nbd"
-        IMAGE_TAG = "v1"
+        APP_NAME = "devops-nbd"
+        IMAGE = "devops-nbd:v1"
     }
 
     stages {
@@ -15,54 +16,54 @@ pipeline {
             }
         }
 
-        stage('Workspace Info') {
+        stage('Workspace') {
             steps {
-                echo 'Current Workspace'
-                sh 'pwd || cd'
-                sh 'ls -la || dir'
+                sh 'pwd'
+                sh 'ls -la'
             }
         }
 
         stage('Verify Dockerfile') {
             steps {
-                echo 'Checking Dockerfile'
+                echo 'Dockerfile Verification'
                 sh 'ls app'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker Image'
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} app/'
-            }
-        }
-
-        stage('Run Container') {
-            steps {
-                echo 'Running Docker Container'
-                sh '''
-                docker rm -f devops-demo || true
-                docker run -d --name devops-demo -p 8090:80 ${IMAGE_NAME}:${IMAGE_TAG}
-                '''
+                sh 'cat app/Dockerfile'
             }
         }
 
         stage('Helm Validation') {
             steps {
+                echo 'Running Helm Lint'
                 sh 'helm lint helm/devops-nbd'
             }
         }
 
         stage('Kubernetes Validation') {
             steps {
-                sh 'kubectl get nodes'
-                sh 'kubectl get pods -A'
+                echo 'Validating Kubernetes YAML'
+
+                sh '''
+                find kubernetes -name "*.yaml" -exec kubectl apply --dry-run=client -f {} \\;
+                '''
+            }
+        }
+
+        stage('Manifest Preview') {
+            steps {
+                sh 'helm template devops helm/devops-nbd | head -100'
+            }
+        }
+
+        stage('Git Information') {
+            steps {
+                sh 'git branch'
+                sh 'git log --oneline -5'
             }
         }
 
         stage('Finished') {
             steps {
-                echo 'Enterprise CI Pipeline Completed Successfully'
+                echo 'Enterprise CI Validation Successful'
             }
         }
     }
@@ -70,15 +71,16 @@ pipeline {
     post {
 
         success {
-            echo 'Pipeline Success'
+            echo 'Pipeline SUCCESS'
         }
 
         failure {
-            echo 'Pipeline Failed'
+            echo 'Pipeline FAILED'
         }
 
         always {
-            echo 'Pipeline Finished'
+            cleanWs()
         }
     }
+
 }

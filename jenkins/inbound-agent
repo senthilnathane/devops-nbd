@@ -1,0 +1,12 @@
+FROM ubuntu:24.04
+
+RUN install \
+Docker CLI \
+kubectl \
+Helm \
+OpenShift CLI \
+Git \
+Terraform \
+Ansible
+
+CMD ["bash"]
