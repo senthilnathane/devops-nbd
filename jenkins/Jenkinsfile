@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "devops-nbd"
+        IMAGE_TAG = "v1"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+        }
+
+        stage('Workspace Info') {
+            steps {
+                echo 'Current Workspace'
+                sh 'pwd || cd'
+                sh 'ls -la || dir'
+            }
+        }
+
+        stage('Verify Dockerfile') {
+            steps {
+                echo 'Checking Dockerfile'
+                sh 'ls app'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker Image'
+                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} app/'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                echo 'Running Docker Container'
+                sh '''
+                docker rm -f devops-demo || true
+                docker run -d --name devops-demo -p 8090:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Helm Validation') {
+            steps {
+                sh 'helm lint helm/devops-nbd'
+            }
+        }
+
+        stage('Kubernetes Validation') {
+            steps {
+                sh 'kubectl get nodes'
+                sh 'kubectl get pods -A'
+            }
+        }
+
+        stage('Finished') {
+            steps {
+                echo 'Enterprise CI Pipeline Completed Successfully'
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'Pipeline Success'
+        }
+
+        failure {
+            echo 'Pipeline Failed'
+        }
+
+        always {
+            echo 'Pipeline Finished'
+        }
+    }
+}
