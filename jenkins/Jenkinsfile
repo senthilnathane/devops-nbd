@@ -7,23 +7,17 @@ pipeline {
         IMAGE = "devops-nbd:v1"
     }
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-    }
-
     stages {
 
         stage('Checkout') {
             steps {
-                echo "========== CHECKOUT =========="
+                echo 'Checking out source code...'
                 checkout scm
             }
         }
 
-        stage('Workspace Information') {
+        stage('Workspace') {
             steps {
-                echo "========== WORKSPACE =========="
                 sh '''
                 pwd
                 ls -la
@@ -33,8 +27,8 @@ pipeline {
 
         stage('Verify Dockerfile') {
             steps {
-                echo "========== VERIFY DOCKERFILE =========="
                 sh '''
+                echo "===== Dockerfile ====="
                 ls app
                 cat app/Dockerfile
                 '''
@@ -43,7 +37,6 @@ pipeline {
 
         stage('Git Information') {
             steps {
-                echo "========== GIT INFORMATION =========="
                 sh '''
                 git --version
                 git branch
@@ -54,7 +47,6 @@ pipeline {
 
         stage('Helm Validation') {
             steps {
-                echo "========== HELM LINT =========="
                 sh '''
                 helm version
                 helm lint helm/devops-nbd
@@ -62,60 +54,45 @@ pipeline {
             }
         }
 
-        stage('Helm Manifest Preview') {
+        stage('Manifest Preview') {
             steps {
-                echo "========== HELM TEMPLATE =========="
                 sh '''
-                helm template devops helm/devops-nbd | head -100
+                helm template devops helm/devops-nbd | head -50
                 '''
             }
         }
 
         stage('Kubernetes Validation') {
             steps {
-                echo "========== KUBERNETES VALIDATION =========="
                 sh '''
                 kubectl version --client
 
-                for file in kubernetes/*.yaml
+                for f in kubernetes/*.yaml
                 do
-                    echo "Validating $file"
-                    kubectl apply --dry-run=client -f $file
+                  echo "Checking $f"
+                  kubectl apply --dry-run=client -f $f
                 done
                 '''
             }
         }
 
-        stage('Pipeline Summary') {
+        stage('Pipeline Complete') {
             steps {
-                echo '''
-==========================================
- Enterprise CI Pipeline Completed
-==========================================
- GitHub            : OK
- Jenkins           : OK
- Dockerfile        : OK
- Helm Lint         : OK
- Helm Template     : OK
- Kubernetes YAML   : OK
-==========================================
-'''
+                echo 'Enterprise CI Validation Successful'
             }
         }
     }
 
     post {
-
         success {
-            echo "SUCCESS : Enterprise CI Pipeline Passed"
+            echo 'Pipeline SUCCESS'
         }
 
         failure {
-            echo "FAILED : Enterprise CI Pipeline Failed"
+            echo 'Pipeline FAILED'
         }
 
         always {
-            echo "Cleaning Workspace..."
             deleteDir()
         }
     }
