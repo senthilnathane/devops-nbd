@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps NBD Platform</title>
+    <style>
+        body {
+            background:#0f172a;
+            color:white;
+            font-family:Arial;
+            text-align:center;
+            margin-top:80px;
+        }
+        .card{
+            width:700px;
+            margin:auto;
+            background:#1e293b;
+            padding:30px;
+            border-radius:12px;
+        }
+        h1{color:#38bdf8;}
+        h2{color:#22c55e;}
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+<h1>Enterprise DevOps Platform</h1>
+
+<h2>National Bank of Dubai (Lab)</h2>
+
+<p>Docker ✅</p>
+
+<p>Kubernetes ✅</p>
+
+<p>Helm ✅</p>
+
+<p>Jenkins ✅</p>
+
+<p>Argo CD ✅</p>
+
+<p>Terraform ⏳</p>
+
+<p>OpenShift ⏳</p>
+
+<p>Version 1.0</p>
+
+</div>
+
+</body>
+</html>
