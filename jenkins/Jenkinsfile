@@ -7,63 +7,99 @@ pipeline {
         IMAGE = "devops-nbd:v1"
     }
 
+    options {
+        timestamps()
+        ansiColor('xterm')
+    }
+
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
+                echo "========== CHECKOUT =========="
                 checkout scm
             }
         }
 
-        stage('Workspace') {
+        stage('Workspace Information') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
+                echo "========== WORKSPACE =========="
+                sh '''
+                pwd
+                ls -la
+                '''
             }
         }
 
         stage('Verify Dockerfile') {
             steps {
-                echo 'Dockerfile Verification'
-                sh 'ls app'
-                sh 'cat app/Dockerfile'
-            }
-        }
-
-        stage('Helm Validation') {
-            steps {
-                echo 'Running Helm Lint'
-                sh 'helm lint helm/devops-nbd'
-            }
-        }
-
-        stage('Kubernetes Validation') {
-            steps {
-                echo 'Validating Kubernetes YAML'
-
+                echo "========== VERIFY DOCKERFILE =========="
                 sh '''
-                find kubernetes -name "*.yaml" -exec kubectl apply --dry-run=client -f {} \\;
+                ls app
+                cat app/Dockerfile
                 '''
-            }
-        }
-
-        stage('Manifest Preview') {
-            steps {
-                sh 'helm template devops helm/devops-nbd | head -100'
             }
         }
 
         stage('Git Information') {
             steps {
-                sh 'git branch'
-                sh 'git log --oneline -5'
+                echo "========== GIT INFORMATION =========="
+                sh '''
+                git --version
+                git branch
+                git log --oneline -5
+                '''
             }
         }
 
-        stage('Finished') {
+        stage('Helm Validation') {
             steps {
-                echo 'Enterprise CI Validation Successful'
+                echo "========== HELM LINT =========="
+                sh '''
+                helm version
+                helm lint helm/devops-nbd
+                '''
+            }
+        }
+
+        stage('Helm Manifest Preview') {
+            steps {
+                echo "========== HELM TEMPLATE =========="
+                sh '''
+                helm template devops helm/devops-nbd | head -100
+                '''
+            }
+        }
+
+        stage('Kubernetes Validation') {
+            steps {
+                echo "========== KUBERNETES VALIDATION =========="
+                sh '''
+                kubectl version --client
+
+                for file in kubernetes/*.yaml
+                do
+                    echo "Validating $file"
+                    kubectl apply --dry-run=client -f $file
+                done
+                '''
+            }
+        }
+
+        stage('Pipeline Summary') {
+            steps {
+                echo '''
+==========================================
+ Enterprise CI Pipeline Completed
+==========================================
+ GitHub            : OK
+ Jenkins           : OK
+ Dockerfile        : OK
+ Helm Lint         : OK
+ Helm Template     : OK
+ Kubernetes YAML   : OK
+==========================================
+'''
             }
         }
     }
@@ -71,16 +107,16 @@ pipeline {
     post {
 
         success {
-            echo 'Pipeline SUCCESS'
+            echo "SUCCESS : Enterprise CI Pipeline Passed"
         }
 
         failure {
-            echo 'Pipeline FAILED'
+            echo "FAILED : Enterprise CI Pipeline Failed"
         }
 
         always {
-            cleanWs()
+            echo "Cleaning Workspace..."
+            deleteDir()
         }
     }
-
 }
